@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Models\Employee;
@@ -26,10 +27,7 @@ Route::get('/employees', function () {
 })->name('employees.index');
 
 // Show a specific employee
-Route::get('/employees/{id}', function ($id) {
-    $employee = Employee::findOrFail($id);
-    return view('employees.show', compact('employee'));
-})->name('employees.show');
+Route::get('/employees/{id}', [EmployeeController::class, 'show'])->name('employees.show');
 
 // Select document for a specific employee
 Route::get('/employees/{id}/document', function ($id) {
@@ -108,6 +106,12 @@ Route::post('/employees/{id}/document', function (Request $request, $id) {
     Route::get('/documents/leave-request', [DocumentController::class, 'showLeaveRequestForm'])->name('documents.leave-request-form');
     Route::post('/documents/submit-leave-request', [DocumentController::class, 'submitLeaveRequest'])->name('documents.submit-leave-request');
     Route::post('/documents/ordre-de-mission', [DocumentController::class, 'submitOrdreDeMission'])->name('documents.submit-ordre-de-mission');
+
+    // New route for viewing employee profile
+    Route::get('/employees/{id}/profile', [EmployeeController::class, 'profile'])->name('employees.profile');
+
+    // Existing route for showing a specific employee
+    Route::get('/employees/{id}', [EmployeeController::class, 'show'])->name('employees.show');
 
 });
 
