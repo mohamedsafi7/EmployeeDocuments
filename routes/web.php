@@ -5,6 +5,8 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Models\Employee;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
+
 
 // Redirect the root URL to the login page
 Route::get('/', function () {
@@ -15,58 +17,83 @@ Route::get('/', function () {
 Route::middleware('auth')->group(function () {
 
 
-    // List all employees
-    Route::get('/employees', function () {
-        $employees = Employee::all();
-        return view('employees.index', compact('employees'));
-    })->name('employees.index');
+   
 
-    // Show a specific employee
-    Route::get('/employees/{id}', function ($id) {
-        $employee = Employee::findOrFail($id);
-        return view('employees.show', compact('employee'));
-    })->name('employees.show');
+// List all employees
+Route::get('/employees', function () {
+    $employees = Employee::all();
+    return view('employees.index', compact('employees'));
+})->name('employees.index');
 
-    // Select document for a specific employee
-    Route::get('/employees/{id}/document', function ($id) {
-        $employee = Employee::findOrFail($id);
-        return view('employees.document-select', compact('employee'));
-    })->name('employees.selectDocument');
+// Show a specific employee
+Route::get('/employees/{id}', function ($id) {
+    $employee = Employee::findOrFail($id);
+    return view('employees.show', compact('employee'));
+})->name('employees.show');
 
-    // Generate document based on user selection
-    Route::post('/employees/{id}/document', function (Request $request, $id) {
-        $employee = Employee::findOrFail($id);
-        $documentType = $request->input('document');
+// Select document for a specific employee
+Route::get('/employees/{id}/document', function ($id) {
+    $employee = Employee::findOrFail($id);
+    return view('employees.document-select', compact('employee'));
+})->name('employees.selectDocument');
 
-        if ($documentType == 'conge') {
-            $start_date = $request->input('start_date');
-            $end_date = $request->input('end_date');
-            $number_of_days = \Carbon\Carbon::parse($end_date)->diffInDays(\Carbon\Carbon::parse($start_date));
+// Generate document based on user selection
+Route::post('/employees/{id}/document', function (Request $request, $id) {
+    $employee = Employee::findOrFail($id);
+    $documentType = $request->input('document');
 
-            return view('documents.leave-request-result', compact('employee', 'start_date', 'end_date', 'number_of_days'));
-        } elseif ($documentType == 'mission') {
-            $mission_object = $request->input('mission_object');
-            $mission_purpose = $request->input('mission_purpose');
-            $mission_address = $request->input('mission_address');
-            $transport_means = $request->input('transport_means');
-            $accommodation_address = $request->input('accommodation_address');
-            $current_date = \Carbon\Carbon::now()->format('d/m/Y');
+    if ($documentType == 'conge') {
+        // Validate request data for 'Demande de Congé'
+        $validatedData = $request->validate([
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
 
-            return view('documents.ordre-de-mission-result', compact(
-                'employee',
-                'mission_object',
-                'mission_purpose',
-                'start_date',
-                'end_date',
-                'mission_address',
-                'transport_means',
-                'accommodation_address',
-                'current_date'
-            ));
-        }
+        // Convert start and end dates to Carbon instances
+        $start_date = \Carbon\Carbon::parse($validatedData['start_date']);
+        $end_date = \Carbon\Carbon::parse($validatedData['end_date']);
 
-        // Handle other document types if needed...
-    })->name('employees.generateDocument');
+        // Calculate number of days of leave, including the start date
+        $number_of_days = $start_date->diffInDays($end_date) + 1;
+
+        // Pass validated data to the view
+        return view('documents.leave-request-result', compact('employee', 'start_date', 'end_date', 'number_of_days'));
+
+    } elseif ($documentType == 'mission') {
+        // Validate request data for 'Ordre de Mission'
+        $validatedData = $request->validate([
+            'mission_object' => 'required|string',
+            'mission_purpose' => 'required|string',
+            'mission_start_date' => 'required|date',
+            'mission_address' => 'required|string',
+            'transport_means' => 'required|string',
+            'accommodation_address' => 'required|string',
+            'mission_end_date' => 'required|date|after_or_equal:mission_start_date',
+        ]);
+
+        // Extract required data for the mission
+        $mission_object = $validatedData['mission_object'];
+        $mission_purpose = $validatedData['mission_purpose'];
+        $mission_start_date = \Carbon\Carbon::parse($validatedData['mission_start_date']);
+        $mission_end_date = \Carbon\Carbon::parse($validatedData['mission_end_date']);
+        $mission_address = $validatedData['mission_address'];
+        $transport_means = $validatedData['transport_means'];
+        $accommodation_address = $validatedData['accommodation_address'];
+        
+        // Employee details
+        $name = $employee->name; // Assuming you have a 'name' column in your employees table
+        $address = $employee->address; // Assuming you have an 'address' column in your employees table
+
+        // Pass data to the view
+        return view('documents.ordre-de-mission-result', compact('name', 'address', 'mission_object', 'mission_purpose', 'mission_start_date', 'mission_end_date', 'mission_address', 'transport_means', 'accommodation_address'));
+    }
+
+    // Handle other document types if needed...
+    return redirect()->back()->with('error', 'Invalid document type selected.');
+})->name('employees.generateDocument');
+
+
+
 
     // Profile management routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

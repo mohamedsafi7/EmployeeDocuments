@@ -9,7 +9,7 @@
     </div>
 
     <div class="mb-3">
-        <p>Par la présente, l'entreprise <strong>Commune Taliouine</strong> confie à son collaborateur <strong>Monsieur/Madame {{ $name }}</strong>, habitant au <strong>{{ $address }}</strong> et agissant en tant que <strong>POSITION</strong>, la mission de <strong>{{ $mission_object }}</strong>. Cette mission a pour but de <strong>{{ $mission_purpose }}</strong>. Elle aura lieu du <strong>{{ \Carbon\Carbon::parse($start_date)->format('d/m/Y') }}</strong> au <strong>{{ \Carbon\Carbon::parse($end_date)->format('d/m/Y') }}</strong>.</p>
+        <p>Par la présente, l'entreprise <strong>Commune Taliouine</strong> confie à son collaborateur <strong>Monsieur/Madame {{ $name }}</strong>, habitant au <strong>{{ $address }}</strong> et agissant en tant que <strong>POSITION</strong>, la mission de <strong>{{ $mission_object }}</strong>. Cette mission a pour but de <strong>{{ $mission_purpose }}</strong>. Elle aura lieu du <strong>{{ \Carbon\Carbon::parse($mission_start_date)->format('d/m/Y') }}</strong> au <strong>{{ \Carbon\Carbon::parse($mission_end_date)->format('d/m/Y') }}</strong>.</p>
     </div>
 
     <div class="mb-3">
@@ -29,7 +29,7 @@
     </div>
 
     <div class="mb-3">
-        <p>Fait à <strong>Taliouine</strong>, le <strong>{{ $current_date }}</strong>.</p>
+        <p>Fait à <strong>Taliouine</strong>, le <strong>{{ \Carbon\Carbon::now()->format('d/m/Y') }}</strong>.</p>
     </div>
 
     <div class="text-right">
